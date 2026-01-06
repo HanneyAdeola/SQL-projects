@@ -34,63 +34,108 @@ The database contains the following key tables:
 
 ---
 
+## 3. Analysis & Findings
 ## 🔹 Task 1: Warehouse Capacity & Staffing Analysis
-This section evaluates warehouse capacity and workforce distribution.
+### Q1: Which warehouses have storage capacity above 15,000 units?
+**SQL Query:**
+```sql
+SELECT warehouse_id, location, capacity, manager, number_of_employees
+FROM warehouse_information
+WHERE capacity > 15000;
+```
+--- 
 
-### Key Questions:
-- Which warehouses have storage capacity above 15,000 units?
-- How are employees distributed across warehouse locations?
+### Q2: What is the average number of employees per location?
+**SQL Query:**
 
-### Business Value:
-- Identifies **high-capacity warehouses**
-- Highlights staffing differences across regions
-- Supports workforce planning and operational scaling
-
+```sql
+SELECT location, AVG(number_of_employees) AS avg_employees
+FROM warehouse_information
+GROUP BY location;
+```
 ---
-
 ## 🔹 Task 2: Inventory Insights
-This section analyzes inventory distribution and risk.
-
-### Key Questions:
-- What is the total quantity of each product across all warehouses?
-- Which products are most heavily stocked?
-- Which inventory items are nearing expiry within the next 3 months?
-- How dependent are we on each supplier?
-
-### Business Value:
-- Prevents **inventory waste** due to expiration
-- Identifies **overstocked products**
-- Supports supplier risk management
-
+### Q3: Total quantity of each product across all warehouses
+**SQL Query:**
+```sql
+SELECT product_name, SUM(quantity) AS total_quantity
+FROM inventory_records
+GROUP BY product_name
+ORDER BY total_quantity DESC;
+```
 ---
 
-## 🔹 Task 3: Shipping Performance Analysis
-This section evaluates logistics efficiency and costs.
-
-### Key Questions:
-- What is the average shipping cost per destination?
-- Which carriers handle the highest shipment volumes?
-- How efficient is each carrier in terms of transit time?
-
-### Business Value:
-- Identifies **high-cost shipping routes**
-- Evaluates carrier performance
-- Supports logistics optimization decisions
-
+## Q4: Products expiring in the next 3 months
+**SQL Query:**
+```sql
+SELECT wi.warehouse_id, location, product_name, quantity, supplier, expiry_date
+FROM inventory_records ir
+JOIN warehouse_information wi ON ir.warehouse_id = wi.warehouse_id
+WHERE expiry_date <= DATE_ADD(CURDATE(), INTERVAL 3 MONTH)
+ORDER BY expiry_date ASC;
+```
 ---
 
-## 🔹 Task 4: Summary & Operational KPIs
-This section provides high-level operational insights.
+## Q5: Total inventory by supplier
+**SQL Query:**
+```sql
+SELECT supplier, SUM(quantity) AS total_quantity
+FROM inventory_records
+GROUP BY supplier
+ORDER BY total_quantity DESC;
+```
+---
+## 🔹 Task 3: Shipping Performance
+### Q6: Average shipping cost per destination
+**SQL Query:**
+```sql
+SELECT destination, ROUND(AVG(shipping_cost),1) AS avg_shipping_cost
+FROM shipping_log
+GROUP BY destination
+ORDER BY avg_shipping_cost DESC;
+```
+--- 
 
-### Key Questions:
-- How does shipment volume vary by month?
-- What is the warehouse utilization rate relative to capacity?
+## Q7: Top carriers by shipments
+**SQL Query:**
+```sql
+SELECT carrier, COUNT(shipment_id) AS total_shipments
+FROM shipping_log
+GROUP BY carrier
+ORDER BY total_shipments DESC;
+```
+---
 
-### Business Value:
-- Reveals **seasonal shipment trends**
-- Highlights underutilized or overutilized warehouses
-- Supports capacity planning and expansion decisions
+## Q8: Average transit time by carrier
+**SQL Query:**
+```sql
+SELECT carrier, AVG(DATEDIFF(arrival_date, dispatch_date)) AS avg_transit_days
+FROM shipping_log
+GROUP BY carrier
+ORDER BY avg_transit_days ASC;
+```
+---
 
+## 🔹 Task 4: Summary Analysis
+### Q9: Monthly shipment volume
+**SQL Query:**
+```sql
+SELECT DATE_FORMAT(dispatch_date, '%Y-%m') AS month, COUNT(shipment_id) AS total_shipments
+FROM shipping_log
+GROUP BY month
+ORDER BY month ASC;
+```
+---
+
+## Q10: Warehouse utilization rate
+**SQL Query:**
+```sql
+SELECT wi.warehouse_id, wi.location, ROUND(SUM(ir.quantity/capacity*100)) AS utilization_rate
+FROM warehouse_information wi
+JOIN inventory_records ir ON wi.warehouse_id = ir.warehouse_id
+GROUP BY wi.warehouse_id, wi.location
+ORDER BY utilization_rate DESC;
+```
 ---
 
 ## 📊 Key Insights
@@ -111,3 +156,6 @@ This section provides high-level operational insights.
 
 ---
 
+## 🚀 Conclusion
+This project demonstrates the use of **SQL for operational and logistics analysis**, focusing on real-world business problems.  
+It highlights the ability to transform raw transactional data into actionable insights that support efficient warehouse and supply chain management.
